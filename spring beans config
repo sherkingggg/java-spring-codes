@@ -1,0 +1,16 @@
+package kz.bitlab.spring.spring_project.config;
+
+import kz.bitlab.spring.spring_project.beans.Manager;
+import kz.bitlab.spring.spring_project.beans.MySQLManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class BeansConfig {
+
+    @Bean(value = "mySQLBean")
+    public Manager manager(){
+        return new MySQLManager();
+    }
+
+}
