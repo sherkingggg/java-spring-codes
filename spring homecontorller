@@ -1,0 +1,80 @@
+package kz.bitlab.spring_project.my_project.controller;
+
+import kz.bitlab.spring_project.my_project.db.DBManager;
+import kz.bitlab.spring_project.my_project.dto.Items;
+import kz.bitlab.spring_project.my_project.dto.Task;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.ArrayList;
+
+@Controller
+public class HomeController {
+
+    @GetMapping(value = "/")
+    public String index(Model model){
+        ArrayList<Task> tasks = DBManager.getTasks();
+
+        model.addAttribute("tasks",tasks);
+
+        return "index";
+    }
+
+    @GetMapping(value = "/details/{taskId}")
+    public String details(Model model, @PathVariable(name = "taskId") Long id){
+        ArrayList<Task> tasks = DBManager.getTasks();
+
+        Task task = null;
+
+        for (Task task1 : tasks){
+            if (task1.getId().equals(id)){
+                task = task1;
+            }
+        }
+
+        model.addAttribute("task",task);
+
+        return "detailsPage";
+    }
+
+    @PostMapping(value = "/addTask")
+    public String add(@RequestParam(name = "name") String name,
+                      @RequestParam(name = "des") String d,
+                      @RequestParam(name = "date") String date,
+                      Model model){
+        Task task = new Task();
+        task.setName(name);
+        task.setDescription(d);
+        task.setDeadlineDate(date);
+        task.setCompleted(false);
+
+        DBManager.addTask(task);
+
+        return "redirect:/?success";
+    }
+
+    @PostMapping(value = "/updateTask/{taskId}")
+    public String update(@RequestParam(name = "name") String name,
+                         @RequestParam(name = "des") String d,
+                         @RequestParam(name = "date") String date,
+                         @RequestParam(name = "completed") boolean completed,
+                      @PathVariable(name = "taskId") Long id,
+                      Model model){
+        Task task = new Task();
+        task.setId(id);
+        task.setName(name);
+        task.setDescription(d);
+        task.setDeadlineDate(date);
+        task.setCompleted(completed);
+
+        DBManager.updateTask(task);
+
+        return "redirect:/?successu";
+    }
+
+
+}
