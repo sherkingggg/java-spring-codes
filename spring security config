@@ -1,49 +1,57 @@
 package kz.bitlab.security_project.springsecurity.config;
 
+import kz.bitlab.security_project.springsecurity.services.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.ReloadableResourceBundleMessageSource;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.i18n.CookieLocaleResolver;
-import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
-
-import java.util.Locale;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-public class WebMvcConfig implements WebMvcConfigurer {
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, proxyTargetClass = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Bean
-    public ReloadableResourceBundleMessageSource messageSource(){
-        ReloadableResourceBundleMessageSource source = new ReloadableResourceBundleMessageSource();
-        source.setBasename("classpath:translate");
-        source.setDefaultEncoding("UTF-8");
+    @Autowired
+    private UserService userService;
 
-        return source;
-    }
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 
-    @Bean
-    public CookieLocaleResolver localeResolver(){
-        CookieLocaleResolver resolver = new CookieLocaleResolver();
-        resolver.setDefaultLocale(new Locale("ru"));
-        resolver.setCookieName("language");
-        resolver.setCookieMaxAge(3600*24*365);
-
-        return resolver;
-    }
-
-    @Bean
-    public LocaleChangeInterceptor localeInterceptor(){
-
-        LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
-        interceptor.setParamName("lng");
-
-        return interceptor;
+        auth.userDetailsService(userService);
 
     }
 
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(localeInterceptor());
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http.authorizeRequests().
+                antMatchers("/").permitAll().
+                antMatchers("/css/**","/js/**").permitAll();
+
+        http.formLogin().
+                loginPage("/login").
+                loginProcessingUrl("/auth").permitAll().
+                usernameParameter("user_email").
+                passwordParameter("user_password").
+                failureUrl("/login?error").
+                defaultSuccessUrl("/profile");
+
+        http.logout().
+                logoutUrl("/tologout").permitAll().
+                logoutSuccessUrl("/login");
+
+//        http.csrf().disable();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 }
+
