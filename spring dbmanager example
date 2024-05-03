@@ -1,0 +1,137 @@
+package kz.bitlab.spring.spring_project.beans;
+
+import kz.bitlab.spring.spring_project.dto.Posts;
+
+import java.awt.event.ItemListener;
+import java.sql.*;
+import java.util.ArrayList;
+
+public class MySQLManager implements Manager {
+
+    private static Connection connection;
+
+    static {
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/bitlab_javaee_db?serverTimezone=UTC","root","");
+        } catch (SQLException | ClassNotFoundException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
+
+
+    public ArrayList<Posts> getPosts(){
+
+        ArrayList<Posts> posts = new ArrayList<>();
+
+        try {
+
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM posts");
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()){
+                posts.add(new Posts(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("shortContent"),
+                        rs.getString("content"),
+                        rs.getString("pictureUrl"),
+                        rs.getTimestamp("postDate"),
+                        rs.getString("type")
+                ));
+            };
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return posts;
+    }
+
+    public static ArrayList<Posts> getPosts(String type){
+
+        ArrayList<Posts> posts = new ArrayList<>();
+
+        try {
+
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM posts WHERE type=?");
+
+            ps.setString(1,type);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()){
+                posts.add(new Posts(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("shortContent"),
+                        rs.getString("content"),
+                        rs.getString("pictureUrl"),
+                        rs.getTimestamp("postDate"),
+                        rs.getString("type")
+                ));
+            };
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return posts;
+    }
+
+    public Posts getPost(Long id){
+
+        Posts post = null;
+
+        try {
+
+            PreparedStatement ps = connection.prepareStatement("SELECT * FROM posts WHERE id=?");
+
+            ps.setLong(1, id);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()){
+                post = new Posts(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("shortContent"),
+                        rs.getString("content"),
+                        rs.getString("pictureUrl"),
+                        rs.getTimestamp("postDate"),
+                        rs.getString("type")
+                );
+            };
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return post;
+    }
+
+    @Override
+    public void addPost(Posts post) {
+        try {
+
+            PreparedStatement ps = connection.prepareStatement("" +
+                    "INSERT INTO posts (title, shortContent, content, pictureUrl, postDate, type) " +
+                    "VALUES (?,?,?,?,NOW(),'all')");
+
+            ps.setString(1,post.getTitle());
+            ps.setString(2,post.getShortContent());
+            ps.setString(3,post.getContent());
+            ps.setString(4,post.getPictureURL());
+
+            ps.executeUpdate();
+
+            ps.close();
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}
